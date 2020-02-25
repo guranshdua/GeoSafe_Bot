@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>GeoSafe</title>
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Catamaran:100,200,300,400,500,600,700,800,900">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Muli">
+    <link rel="stylesheet" href="assets/fonts/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/fonts/simple-line-icons.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.css"></script>
+    <script defer src="/__/firebase/6.5.0/firebase-app.js"></script>
+    <script defer src="/__/firebase/6.5.0/firebase-auth.js"></script>
+    <script defer src="/__/firebase/6.5.0/firebase-database.js"></script>
+    <script defer src="/__/firebase/init.js"></script>
+    <link rel="stylesheet" href="assets/fonts/fontawesome-all.min.css">
+    <link rel="stylesheet" href="assets/fonts/font-awesome.min.css">
+    <link rel="stylesheet" href="assets/fonts/simple-line-icons.min.css">
+    <link rel="stylesheet" href="assets/fonts/fontawesome5-overrides.min.css">
+    <!--Custom made Javascript-->
+    <script defer type="text/javascript" src="app.js"></script>
+    <script>
+        
+        function fetch()
+        {
+            var hum=[0],temp=[0],mq2=[0],mq135=[0],rain=[0];
+            var i=0;
+            var cityselect=document.getElementById('cityselect').value;
+            console.log(cityselect);
+            firebase.database().ref('/NodeComplete/'+cityselect).limitToLast(20).once('value').then(function(snapshot) {
+                snapshot.forEach(function(childSnapshot) {
+                //var hum = childSnapshot.humidity;
+                    var childData = childSnapshot.val();
+                //console.log(childData);
+                    hum[i]=childData.humidity;
+                    temp[i]=childData.temperature;
+                    mq2[i]=childData.mq2;
+                    mq135[i]=childData.mq135;
+                    rain[i]=childData.rain;
+                    console.log(hum[i]);                
+                    i++;
+                    
+            });
+            
+            firebase.database().ref('/NodeCurrent/' + cityselect).once('value').then(function(snapshot) {
+            var curtemp = (snapshot.val() && snapshot.val().temperature);
+            var curhum = (snapshot.val() && snapshot.val().humidity);
+            var curaqi = (snapshot.val() && snapshot.val().mq135);
+            var curgas = (snapshot.val() && snapshot.val().mq2);
+            //document.write("Username: "+username+"<br />Profile Picture URL: "+profile+"<br />Email ID: "+email+"<br /><br /><button onclick='location.href=\"./dash.html\"'>Back</button>");
+            var gasvar,safe;
+            if(curgas>700)
+            {
+                gasvar="Safe";
+            }
+            else
+            {
+                gasvar="Unsafe";
+            }
+            if(curtemp<50 && curhum<75 && curaqi<500 && curgas>500)
+            {
+                safe="SAFE";
+                document.getElementById("safeornot").innerHTML=safe;
+                document.getElementById("safeornot").style.color="green";
+            }
+            else
+            {
+                safe="UNSAFE";
+                document.getElementById("safeornot").innerHTML=safe;
+                document.getElementById("safeornot").style.color="red";
+            }
+            document.getElementById("curtemp").innerHTML=curtemp+" &#8451";
+            document.getElementById("curhum").innerHTML=curhum+" %";
+            document.getElementById("curaqi").innerHTML=curaqi+" PPM";
+            document.getElementById("curgas").innerHTML=gasvar;
+            
+            });
+
+            displayData(hum,temp,mq2,mq135);
+            });
+        //console.log(hum);
+        }
+        function displayData(hum,temp,mq2,mq135)
+        {
+            console.log(mq2);
+            document.getElementById("data").classList.remove("d-none");
+            var ctx = document.getElementById('humidity').getContext('2d');
+            var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                  data: hum,
+                  label: "Humidity",
+                  borderColor: "#3e95cd",
+                  fill: true,
+                }]
+            },
+            options: {
+              animation: {
+                  duration: 1000 // general animation time
+              },
+              hover: {
+                  animationDuration: 500 // duration of animations when hovering an item
+              },
+              responsiveAnimationDuration:1000 // animation duration after a resize
+            },
+  
+        });
+        var ctx = document.getElementById('temperature').getContext('2d');
+            var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                  data: temp,
+                  label: "Temperature",
+                  borderColor: "#3e95cd",
+                  fill: true,
+                }]
+            },
+            options: {
+              animation: {
+                  duration: 1000 // general animation time
+              },
+              hover: {
+                  animationDuration: 500 // duration of animations when hovering an item
+              },
+              responsiveAnimationDuration:1000 // animation duration after a resize
+            },
+  
+        });
+        var ctx = document.getElementById('aqi').getContext('2d');
+            var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                  data: mq135,
+                  label: "AQI",
+                  borderColor: "#3e95cd",
+                  fill: true,
+                }]
+            },
+            options: {
+              animation: {
+                  duration: 1000 // general animation time
+              },
+              hover: {
+                  animationDuration: 500 // duration of animations when hovering an item
+              },
+              responsiveAnimationDuration:1000 // animation duration after a resize
+            },
+  
+        });
+        var ctx = document.getElementById('mq2').getContext('2d');
+            var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{
+                  data: mq2,
+                  label: "CNG Gas",
+                  borderColor: "#3e95cd",
+                  fill: true,
+                }]
+            },
+            options: {
+              animation: {
+                  duration: 1000 // general animation time
+              },
+              hover: {
+                  animationDuration: 500 // duration of animations when hovering an item
+              },
+              responsiveAnimationDuration:1000 // animation duration after a resize
+            },
+  
+        });
+        }
+    </script>
+</head>
+
+<body id="page-top">
+    <nav class="navbar navbar-light navbar-expand-lg fixed-top" id="mainNav">
+        <div class="container"><a class="navbar-brand js-scroll-trigger" href="#page-top">Geo Safe</a><button data-toggle="collapse" data-target="#navbarResponsive" class="navbar-toggler float-right" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation"><i class="fa fa-bars"></i></button>
+            <div
+                class="collapse navbar-collapse" id="navbarResponsive">
+                <ul class="nav navbar-nav ml-auto">
+                    <li class="nav-item" role="presentation"></li>
+                    <li class="nav-item" role="presentation"></li>
+                    <li class="nav-item" role="presentation"></li>
+                </ul>
+        </div>
+        </div>
+    </nav>
+    <header class="masthead" style=" background:url('assets/img/bg-pattern.png'), linear-gradient(to left, #7b4397, #dc2430);height:100%;">
+        <div class="container h-100">
+            <div class="row h-100">
+                <div class="col-lg-7 my-auto">
+                    <div class="mx-auto header-content">
+                        <h1 class="mb-5" style="font-weight: 600;">GeoSafe</h1><a class="btn btn-outline-warning btn-xl js-scroll-trigger" role="button" href="#explore" style="font-size: 14px;">Explore NOW!</a></div>
+                </div>
+                <div class="col-lg-5 my-auto">
+                    <div class="device-container">
+                        <div class="device-mockup iphone6_plus portrait white">
+                            <div class="device" style="background-image:url('assets/img/iphone_6_plus_white_port.png');">
+                                <div class="screen"><img class="img-fluid" src="assets/img/demo-screen-1.jpg"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="iphone-mockup"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-heading text-center">
+                <h2>Unlimited Features, Unlimited Fun</h2>
+                <p class="text-muted">Check out what you can do with this app theme!</p>
+                <hr>
+            </div>
+            <div class="row">
+                <div class="col-lg-4 my-auto">
+                    <div class="device-container">
+                        <div class="device-mockup iphone6_plus portrait white">
+                            <div class="device" style="background-image:url('assets/img/iphone_6_plus_white_port.png');">
+                                <div class="screen"><img class="img-fluid" src="assets/img/demo-screen-1.jpg"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8 my-auto">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="feature-item"><i class="icon-screen-smartphone text-primary"></i>
+                                    <h3>Use from anywhere</h3>
+                                    <p class="text-muted">Access location analysis from anywhere around the world</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="feature-item"><i class="icon-chart text-primary"></i>
+                                    <h3>Analytics</h3>
+                                    <p class="text-muted">Get responsive analysis about your query</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="feature-item"><i class="icon-present text-primary"></i>
+                                    <h3>Free to Use</h3>
+                                    <p class="text-muted">GeoSafe is totally free to use!</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="feature-item"><i class="icon-lock-open text-primary"></i>
+                                    <h3>Open Source</h3>
+                                    <p class="text-muted">We promote Open Source! You may contribute on GitHub!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="cta" style="background-image:url('assets/img/bg-cta.jpg');">
+        <div class="cta-content">
+            <div class="container">
+                <h2 style="font-size: 50px;">See location analysis.<br>NOW!</h2><a class="btn btn-outline-warning btn-xl js-scroll-trigger" role="button" href="#explore">Let's Get Started!</a></div>
+        </div>
+        <div class="overlay"></div>
+    </section>
+    <section id="explore">
+        <div class="container">
+            <h2 class="text-center" style="font-weight: 400;">See Location Analysis</h2>
+            <p class="text-center">Select your location and we'll show you a detailed analysis.</p>
+            <div class="container" style="align-items: center; justify-content: center;">
+            
+                <div class="form-group text-center justify-content-center ml-auto mr-auto" style="width: 30%;">
+                    <select class="form-control" id="cityselect">
+                        <optgroup label="Select Location"><option value="Delhi" selected="">Delhi</option><option value="Gurgaon">Gurgaon</option><option value="Noida">Noida</option></optgroup>
+                    </select>
+                    <br>
+                    <button class="btn btn-primary" onclick="fetch()" style="text-align:center;">View</button>
+                </div>
+            
+            
+            </div>
+            
+            <div class="row d-none" id="data">
+                <div class="container">
+                        <section id="features" class="features" style="padding-bottom: 0px; padding-top: 20px;">
+                                <div class="container">
+                                        <div class="row justify-content-center">
+                                                <div class="col-lg-3">
+                                                    <div class="feature-item">
+                                                        <p class="text-muted" style="font-weight: 18px;;">Your Location is</p>
+                                                        <h2 style="font-weight: 600;" id="safeornot"></h2>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                    <div class="row justify-content-center">
+                                        <div class="col-lg-12 my-auto">
+                                            <div class="container-fluid">
+                                                <div class="row">
+                                                    <div class="col-lg-3">
+                                                        <div class="feature-item"><i class="fas fa-thermometer-quarter text-primary"></i>
+                                                            <h3 id="curtemp"></h3>
+                                                            <p class="text-muted">Temperature</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-3">
+                                                        <div class="feature-item"><i class="fas fa-tint text-primary"></i>
+                                                            <h3 id="curhum"></h3>
+                                                            <p class="text-muted">Humidity</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-3">
+                                                        <div class="feature-item"><i class="fas fa-wind text-primary"></i>
+                                                            <h3 id="curaqi"></h3>
+                                                            <p class="text-muted">Air Quality Index</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-lg-3">
+                                                        <div class="feature-item"><i class="fas fa-stroopwafel text-primary"></i>
+                                                            <h3 id="curgas"></h3>
+                                                            <p class="text-muted">Harmful Gases</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                </div>
+                <div class="col-md-6">
+                  <br /><br /><br /><br />
+                  <div class="card-container">
+                    <div class="card" style="width: 100%;">
+                      <div class="card-header" style="text-align:center;">
+                        <h5 class="f700">Humidity Graph</h5>
+                      </div>
+                     <div class="card-body">
+                       <div class="chart-container" style="position: relative; height:100%; width:auto">
+                         <canvas id="humidity" ></canvas>
+                       </div>
+                     </div>
+                   </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                    <br /><br /><br /><br />
+                    <div class="card-container">
+                        <div class="card" style="width: 100%;">
+                        <div class="card-header" style="text-align:center;">
+                            <h5 class="f700">Temperature Graph</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container" style="position: relative; height:100%; width:auto">
+                            <canvas id="temperature" ></canvas>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                        <br /><br /><br /><br />
+                        <div class="card-container">
+                            <div class="card" style="width: 100%;">
+                            <div class="card-header" style="text-align:center;">
+                                <h5 class="f700">Air Quality Index</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container" style="position: relative; height:100%; width:auto">
+                                <canvas id="aqi" ></canvas>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                            <br /><br /><br /><br />
+                            <div class="card-container">
+                                <div class="card" style="width: 100%;">
+                                <div class="card-header" style="text-align:center;">
+                                    <h5 class="f700">CNG Gas</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container" style="position: relative; height:100%; width:auto">
+                                    <canvas id="mq2" ></canvas>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+            </div>
+        </div>
+    </section>
+    <section id="download" class="download text-center bg-primary" style="margin-bottom: 10px;">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 mx-auto">
+                    <h2 class="section-heading">Discover what all the buzz is about!</h2>
+                    <p>Coming Soon on App Store!</p>
+                    <div class="badges"><a class="badge-link" href="#"><img src="assets/img/google-play-badge.svg"></a><a class="badge-link" href="#"><img src="assets/img/app-store-badge.svg"></a></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section id="contact" class="contact bg-primary">
+        <div class="container">
+            <h2><span>We&nbsp;</span><i class="fa fa-heart"></i><span>&nbsp;new friends!</span></h2>
+            <ul class="list-inline list-social">
+                <li class="list-inline-item social-twitter"><a href="#"><i class="fa fa-twitter"></i></a></li>
+                <li class="list-inline-item social-facebook"><a href="#"><i class="fa fa-facebook"></i></a></li>
+                <li class="list-inline-item social-google-plus"><a href="#"><i class="fa fa-google-plus"></i></a></li>
+            </ul>
+        </div>
+    </section>
+    <footer>
+        <div class="container">
+            <p>©&nbsp;GeoSafe 2019. All Rights Reserved.</p>
+        </div>
+    </footer>
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.4.1/jquery.easing.min.js"></script>
+    <script src="assets/js/new-age.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
+
+    <script>
+        
+
+        
+        
+    </script>
+</body>
+
+</html>
